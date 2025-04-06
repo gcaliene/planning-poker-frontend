@@ -38,6 +38,7 @@ export default function RoomPage() {
         const fetchRoom = async () => {
             try {
                 const roomData = await getRoom(roomId);
+                console.log('Room data:', roomData);
                 setRoom(roomData);
                 setCurrentVote(roomData.votes[userId] || null);
                 setShowVotes(roomData.revealed);
@@ -146,8 +147,8 @@ export default function RoomPage() {
                                 onClick={() => handleVote(value)}
                                 disabled={room.revealed}
                                 className={`p-4 text-xl font-bold rounded-md border-2 ${currentVote === value
-                                        ? 'border-indigo-600 bg-indigo-50 text-indigo-600'
-                                        : 'border-gray-200 hover:border-indigo-300'
+                                    ? 'border-indigo-600 bg-indigo-50 text-indigo-600'
+                                    : 'border-gray-200 hover:border-indigo-300'
                                     } ${room.revealed ? 'opacity-50' : ''}`}
                             >
                                 {value}

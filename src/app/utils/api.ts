@@ -13,7 +13,15 @@ export async function createRoom(name: string, createdBy: string) {
     throw new Error('Failed to create room');
   }
 
-  return response.json();
+  const data = await response.json();
+  console.log('API Response:', data);
+  
+  // Ensure we have a roomId in the response
+  if (!data.id) {
+    throw new Error('Invalid response from server: missing roomId');
+  }
+
+  return { roomId: data.id };
 }
 
 export async function getRoom(roomId: string) {

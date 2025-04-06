@@ -29,11 +29,16 @@ export default function Home() {
       localStorage.setItem('userName', userName);
 
       const { roomId } = await createRoom(roomName, userId);
+      console.log('Created room with ID:', roomId); // Debug log
+
+      if (!roomId) {
+        throw new Error('Room ID is missing');
+      }
 
       router.push(`/rooms/${roomId}`);
     } catch (err) {
+      console.error('Error creating room:', err);
       setError('Failed to create room. Please try again.');
-      console.error(err);
     } finally {
       setIsLoading(false);
     }
