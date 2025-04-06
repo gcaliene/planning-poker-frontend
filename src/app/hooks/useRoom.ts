@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
 import { createRoom, checkRoomExists } from '../utils/api';
@@ -7,15 +7,20 @@ export type FormType = 'initial' | 'create' | 'join';
 
 export function useRoom() {
   const router = useRouter();
-  const [userName, setUserName] = useState(() => {
-    // Initialize userName from localStorage if it exists
-    return localStorage.getItem('userName') || '';
-  });
+  const [userName, setUserName] = useState('');
   const [roomName, setRoomName] = useState('');
   const [roomId, setRoomId] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [activeForm, setActiveForm] = useState<FormType>('initial');
+
+  // Load userName from localStorage after component mounts
+  useEffect(() => {
+    const storedName = localStorage.getItem('userName');
+    if (storedName) {
+      setUserName(storedName);
+    }
+  }, []);
 
   const handleFormSwitch = (form: FormType) => {
     setError('');
