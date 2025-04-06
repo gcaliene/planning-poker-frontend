@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getSocket } from '../../api/socket';
 import { getRoom } from '../../utils/api';
@@ -22,15 +22,25 @@ export default function RoomPage() {
     const [isConnected, setIsConnected] = useState(false);
 
     const roomId = params.roomId as string;
-    const userId = localStorage.getItem('userId') || uuidv4();
-    const userName = localStorage.getItem('userName') || '';
 
+    // Use useMemo to prevent unnecessary re-renders
+    const userData = useMemo(() => {
+        const id = localStorage.getItem('userId') || uuidv4();
+        const name = localStorage.getItem('userName') || '';
+        return { id, name };
+    }, []); // Empty dependency array means this only runs once
+
+    // Separate effect for user data validation
     useEffect(() => {
-        console.log('useEffect Room ID:', roomId);
-        if (!userName) {
+        if (!userData.name) {
             router.push('/');
-            return;
         }
+    }, [userData.name, router]);
+
+    // Main effect for room and socket management
+    useEffect(() => {
+        console.log('main useEffect Room ID:', roomId);
+        if (!userData.name) return;
 
         const socket = getSocket();
         let isComponentMounted = true;
@@ -46,7 +56,7 @@ export default function RoomPage() {
 
                 socket.emit('join-room', {
                     roomId,
-                    user: { id: userId, name: userName, title: userName }
+                    user: { id: userData.id, name: userData.name, title: userData.name }
                 });
             });
 
@@ -62,7 +72,7 @@ export default function RoomPage() {
                     stories: updatedRoom.stories
                 });
                 setRoom(updatedRoom);
-                setCurrentVote(updatedRoom.currentStory ? updatedRoom.votes[userId] || null : null);
+                setCurrentVote(updatedRoom.currentStory ? updatedRoom.votes[userData.id] || null : null);
             });
 
             socket.on('error', (error: { message: string }) => {
@@ -81,7 +91,7 @@ export default function RoomPage() {
                 const roomData = await getRoom(roomId);
                 if (!isComponentMounted) return;
                 setRoom(roomData);
-                setCurrentVote(roomData.votes[userId] || null);
+                setCurrentVote(roomData.votes[userData.id] || null);
             } catch (err) {
                 if (!isComponentMounted) return;
                 console.error('Error fetching room:', err);
@@ -100,7 +110,7 @@ export default function RoomPage() {
         return () => {
             isComponentMounted = false;
             if (socket.connected) {
-                socket.emit('leave-room', { roomId, userId });
+                socket.emit('leave-room', { roomId, userId: userData.id });
             }
             socket.off('room-update');
             socket.off('error');
@@ -108,12 +118,12 @@ export default function RoomPage() {
             socket.off('disconnect');
             socket.disconnect();
         };
-    }, [roomId, userId, userName, router]);
+    }, [roomId, userData, router]); // Now depends on the stable userData object
 
     const handleVote = (value: number) => {
         if (!room || room.revealed) return;
         const socket = getSocket();
-        socket.emit('submit-vote', { roomId, userId, vote: value });
+        socket.emit('submit-vote', { roomId, userId: userData.id, vote: value });
     };
 
     const handleReset = () => {
@@ -130,8 +140,8 @@ export default function RoomPage() {
         socket.emit('add-story', {
             roomId,
             title,
-            userId,
-            createdBy: userId,
+            userId: userData.id,
+            createdBy: userData.id,
             description: ''
         });
     };
@@ -147,8 +157,8 @@ export default function RoomPage() {
         socket.emit('start-voting', {
             roomId,
             storyId,
-            userId,
-            createdBy: userId
+            userId: userData.id,
+            createdBy: userData.id
         });
     };
 
@@ -164,8 +174,8 @@ export default function RoomPage() {
         socket.emit('complete-story', {
             roomId,
             storyId,
-            userId,
-            createdBy: userId
+            userId: userData.id,
+            createdBy: userData.id
         });
     };
 
@@ -180,8 +190,8 @@ export default function RoomPage() {
         socket.emit('skip-story', {
             roomId,
             storyId,
-            userId,
-            createdBy: userId
+            userId: userData.id,
+            createdBy: userData.id
         });
     };
 
@@ -191,8 +201,8 @@ export default function RoomPage() {
         socket.emit('add-story', {
             roomId,
             title,
-            userId,
-            createdBy: userId,
+            userId: userData.id,
+            createdBy: userData.id,
             description: ''
         });
     };
@@ -203,7 +213,7 @@ export default function RoomPage() {
         socket.emit('delete-story', {
             roomId,
             storyId,
-            userId
+            userId: userData.id
         });
     };
 
@@ -227,7 +237,7 @@ export default function RoomPage() {
         return null;
     }
 
-    const isRoomCreator = room.createdBy === userId;
+    const isRoomCreator = room.createdBy === userData.id;
     const pokerValues = [0, 0.5, 1, 2, 3, 5, 8, 13, 20, 40, 100, -1];
     const currentStory = room.currentStory ? room.stories.find((s: Story) => s.id === room.currentStory) ?? null : null;
 
