@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Story } from '../../../../types';
+import { ArrowPathIcon, TrashIcon } from '@heroicons/react/24/outline';
 
 interface StoryManagementProps {
     stories: Story[];
@@ -8,6 +9,8 @@ interface StoryManagementProps {
     onStartVoting: (storyId: string) => void;
     onCompleteStory: (storyId: string) => void;
     onSkipStory: (storyId: string) => void;
+    onRevoteStory: (title: string) => void;
+    onDeleteStory: (storyId: string) => void;
 }
 
 export const StoryManagement: React.FC<StoryManagementProps> = ({
@@ -17,6 +20,8 @@ export const StoryManagement: React.FC<StoryManagementProps> = ({
     onStartVoting,
     onCompleteStory,
     onSkipStory,
+    onRevoteStory,
+    onDeleteStory,
 }) => {
     const [isAddingStory, setIsAddingStory] = useState(false);
     const [newStoryTitle, setNewStoryTitle] = useState('');
@@ -27,6 +32,16 @@ export const StoryManagement: React.FC<StoryManagementProps> = ({
         onAddStory(newStoryTitle);
         setNewStoryTitle('');
         setIsAddingStory(false);
+    };
+
+    const handleRevote = (title: string) => {
+        onRevoteStory(title);
+    };
+
+    const handleDelete = (storyId: string) => {
+        if (window.confirm('Are you sure you want to delete this story?')) {
+            onDeleteStory(storyId);
+        }
     };
 
     return (
@@ -46,7 +61,7 @@ export const StoryManagement: React.FC<StoryManagementProps> = ({
                             {stories.filter(s => s.status === 'completed' || s.status === 'skipped').map((story) => (
                                 <div
                                     key={story.id}
-                                    className="p-3 bg-gray-50 rounded-md"
+                                    className="p-3 bg-gray-50 rounded-md relative group"
                                 >
                                     <h3 className="font-medium text-gray-900 text-sm">{story.title}</h3>
                                     <div className="items-center mt-1">
@@ -55,6 +70,24 @@ export const StoryManagement: React.FC<StoryManagementProps> = ({
                                             <p className="text-xs font-medium text-gray-900">Points: {story.points}</p>
                                         )}
                                     </div>
+                                    {isRoomCreator && (
+                                        <div className="absolute top-2 right-2 flex gap-1">
+                                            <button
+                                                onClick={() => handleRevote(story.title)}
+                                                className="p-1 bg-gray-200 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-gray-300"
+                                                title="Revote this story"
+                                            >
+                                                <ArrowPathIcon className="h-4 w-4 text-gray-600" />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(story.id)}
+                                                className="p-1 bg-gray-200 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-200"
+                                                title="Delete this story"
+                                            >
+                                                <TrashIcon className="h-4 w-4 text-gray-600" />
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>
@@ -99,7 +132,7 @@ export const StoryManagement: React.FC<StoryManagementProps> = ({
                 {stories.filter(s => s.status !== 'completed' && s.status !== 'skipped').map((story) => (
                     <div
                         key={story.id}
-                        className="p-4 bg-gray-50 rounded-md flex justify-between items-center"
+                        className="p-4 bg-gray-50 rounded-md flex justify-between items-center relative group"
                     >
                         <div>
                             <h3 className="font-medium text-gray-900">{story.title}</h3>
@@ -109,32 +142,52 @@ export const StoryManagement: React.FC<StoryManagementProps> = ({
                             )}
                         </div>
                         {isRoomCreator && (
-                            <div className="flex gap-2">
-                                {story.status === 'pending' && (
-                                    <div
-                                        onClick={() => onStartVoting(story.id)}
-                                        className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 cursor-pointer text-sm"
+                            <>
+                                <div className="flex gap-2">
+                                    {story.status === 'pending' && (
+                                        <div
+                                            onClick={() => onStartVoting(story.id)}
+                                            className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 cursor-pointer text-sm"
+                                        >
+                                            Start Voting
+                                        </div>
+                                    )}
+                                    {story.status === 'voting' && (
+                                        <>
+                                            <div
+                                                onClick={() => onCompleteStory(story.id)}
+                                                className="px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200 cursor-pointer text-sm"
+                                            >
+                                                Complete
+                                            </div>
+                                            <div
+                                                onClick={() => onSkipStory(story.id)}
+                                                className="px-3 py-1 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-colors duration-200 cursor-pointer text-sm"
+                                            >
+                                                Skip
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                                <div className="absolute top-2 right-2 flex gap-1">
+                                    {(story.status === 'completed' || story.status === 'skipped') && (
+                                        <button
+                                            onClick={() => handleRevote(story.title)}
+                                            className="p-1 bg-gray-200 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-gray-300"
+                                            title="Revote this story"
+                                        >
+                                            <ArrowPathIcon className="h-4 w-4 text-gray-600" />
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={() => handleDelete(story.id)}
+                                        className="p-1 bg-gray-200 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-200"
+                                        title="Delete this story"
                                     >
-                                        Start Voting
-                                    </div>
-                                )}
-                                {story.status === 'voting' && (
-                                    <>
-                                        <div
-                                            onClick={() => onCompleteStory(story.id)}
-                                            className="px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200 cursor-pointer text-sm"
-                                        >
-                                            Complete
-                                        </div>
-                                        <div
-                                            onClick={() => onSkipStory(story.id)}
-                                            className="px-3 py-1 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-colors duration-200 cursor-pointer text-sm"
-                                        >
-                                            Skip
-                                        </div>
-                                    </>
-                                )}
-                            </div>
+                                        <TrashIcon className="h-4 w-4 text-gray-600" />
+                                    </button>
+                                </div>
+                            </>
                         )}
                     </div>
                 ))}

@@ -53,6 +53,10 @@ export default function RoomPage() {
 
         socket.on('room-update', (updatedRoom: Room) => {
             if (!isComponentMounted) return;
+            console.log('Room update received:', {
+                currentStory: updatedRoom.currentStory,
+                stories: updatedRoom.stories
+            });
             setRoom(updatedRoom);
             setCurrentVote(updatedRoom.currentStory ? updatedRoom.votes[userId] || null : null);
         });
@@ -109,6 +113,7 @@ export default function RoomPage() {
     const handleReset = () => {
         if (!room) return;
         const socket = getSocket();
+        console.log('Before reset:', { currentStory: room.currentStory });
         socket.emit('reset-voting', { roomId });
         setCurrentVote(null);
     };
@@ -174,6 +179,28 @@ export default function RoomPage() {
         });
     };
 
+    const handleRevoteStory = (title: string) => {
+        if (!room) return;
+        const socket = getSocket();
+        socket.emit('add-story', {
+            roomId,
+            title,
+            userId,
+            createdBy: userId,
+            description: ''
+        });
+    };
+
+    const handleDeleteStory = (storyId: string) => {
+        if (!room) return;
+        const socket = getSocket();
+        socket.emit('delete-story', {
+            roomId,
+            storyId,
+            userId
+        });
+    };
+
     if (loading) {
         return (
             <div className="flex min-h-screen items-center justify-center">
@@ -221,6 +248,8 @@ export default function RoomPage() {
                                 onStartVoting={handleStartVoting}
                                 onCompleteStory={handleCompleteStory}
                                 onSkipStory={handleSkipStory}
+                                onRevoteStory={handleRevoteStory}
+                                onDeleteStory={handleDeleteStory}
                             />
                         </div>
 
@@ -241,6 +270,9 @@ export default function RoomPage() {
                         revealed={room.revealed}
                         onVote={handleVote}
                         isVotingActive={!!room.currentStory}
+                        currentStoryStatus={currentStory?.status}
+                        votes={room.votes}
+                        participants={room.participants}
                     />
                 </div>
             </div>
