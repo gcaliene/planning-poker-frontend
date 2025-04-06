@@ -6,7 +6,6 @@ interface CurrentStoryProps {
 }
 
 export const CurrentStory: React.FC<CurrentStoryProps> = ({ currentStory }) => {
-    console.log(currentStory);
     if (!currentStory) return null;
 
     return (
