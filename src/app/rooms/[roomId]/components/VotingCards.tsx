@@ -53,9 +53,11 @@ export const VotingCards: React.FC<VotingCardsProps> = ({
                         onClick={() => canVote && onVote(value)}
                         className={`
                             relative p-4 rounded-lg text-center transition-all duration-200
-                            ${canVote ? 'cursor-pointer hover:bg-gray-100' : 'cursor-not-allowed opacity-50'}
+                            ${canVote ? 'cursor-pointer hover:bg-gray-100' : 'cursor-not-allowed'}
+                            ${!isActuallyVoting && !hasVotes ? 'opacity-50' : ''}
                             ${isSelected ? 'bg-indigo-100 border-2 border-indigo-500' : 'bg-white border border-gray-200'}
-                            ${hasVotes ? 'shadow-md shadow-green-100 border-green-300' : ''}
+                            ${revealed && hasVotes ? 'shadow-md shadow-green-100 border-green-300' : ''}
+                            ${revealed && hasVotes ? 'bg-green-50 border-2 border-green-500 shadow-lg shadow-green-200' : ''}
                         `}
                     >
                         <div className="text-2xl font-bold text-gray-900">
