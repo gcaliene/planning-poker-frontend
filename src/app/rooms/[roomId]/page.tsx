@@ -234,6 +234,36 @@ export default function RoomPage() {
                     {/* Story Management */}
                     {isRoomCreator && (
                         <div className="mb-6">
+                            {/* Completed Stories */}
+                            {room.stories.some(s => s.status === 'completed' || s.status === 'skipped') && (
+                                <div className="mt-6">
+                                    <div
+                                        onClick={() => setShowCompletedStories(!showCompletedStories)}
+                                        className="flex items-center gap-2 cursor-pointer text-gray-600 hover:text-gray-900"
+                                    >
+                                        <h3 className="text-lg font-medium">Completed Stories</h3>
+                                        <span>{showCompletedStories ? '▼' : '▶'}</span>
+                                    </div>
+                                    {showCompletedStories && (
+                                        <div className="mt-2 grid grid-cols-8 gap-2">
+                                            {room.stories.filter(s => s.status === 'completed' || s.status === 'skipped').map((story: Story) => (
+                                                <div
+                                                    key={story.id}
+                                                    className="p-3 bg-gray-50 rounded-md"
+                                                >
+                                                    <h3 className="font-medium text-gray-900 text-sm">{story.title}</h3>
+                                                    <div className="items-center mt-1">
+                                                        <p className="text-xs text-gray-600">{story.status}</p>
+                                                        {story.points !== null && (
+                                                            <p className="text-xs font-medium text-gray-900">Points: {story.points}</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                             <div className="flex justify-between items-center mb-2 max-w-md px-3 py-2 ">
                                 <h2 className="text-xl font-semibold text-gray-900">Stories</h2>
                                 <div
@@ -305,46 +335,16 @@ export default function RoomPage() {
                                     </div>
                                 ))}
                             </div>
-
-                            {/* Completed Stories */}
-                            {room.stories.some(s => s.status === 'completed' || s.status === 'skipped') && (
-                                <div className="mt-6">
-                                    <div
-                                        onClick={() => setShowCompletedStories(!showCompletedStories)}
-                                        className="flex items-center gap-2 cursor-pointer text-gray-600 hover:text-gray-900"
-                                    >
-                                        <h3 className="text-lg font-medium">Completed Stories</h3>
-                                        <span>{showCompletedStories ? '▼' : '▶'}</span>
-                                    </div>
-                                    {showCompletedStories && (
-                                        <div className="mt-2 space-y-2 max-w-md">
-                                            {room.stories.filter(s => s.status === 'completed' || s.status === 'skipped').map((story: Story) => (
-                                                <div
-                                                    key={story.id}
-                                                    className="p-4 bg-gray-50 rounded-md flex justify-between items-center"
-                                                >
-                                                    <div>
-                                                        <h3 className="font-medium text-gray-900">{story.title}</h3>
-                                                        <p className="text-sm text-gray-600">Status: {story.status}</p>
-                                                        {story.points !== null && (
-                                                            <p className="text-sm text-gray-600">Points: {story.points}</p>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            )}
                         </div>
                     )}
 
                     {/* Current Story */}
                     {currentStory && (
-                        <div className="mb-6 p-4 bg-gray-50 rounded-md">
+                        <div className="mb-6 p-4 bg-gray-50 rounded-md max-w-md">
                             <h2 className="text-xl font-semibold mb-2 text-gray-900">
                                 Current Story: {currentStory.title}
                             </h2>
+                            <p className="text-gray-600">Status: {currentStory.status}</p>
                             {currentStory.points !== null && (
                                 <p className="text-gray-600">Points: {currentStory.points}</p>
                             )}
