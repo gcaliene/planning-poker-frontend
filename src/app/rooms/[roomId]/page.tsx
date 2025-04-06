@@ -26,6 +26,7 @@ export default function RoomPage() {
     const userName = localStorage.getItem('userName') || '';
 
     useEffect(() => {
+        console.log('useEffect Room ID:', roomId);
         if (!userName) {
             router.push('/');
             return;
@@ -34,42 +35,46 @@ export default function RoomPage() {
         const socket = getSocket();
         let isComponentMounted = true;
 
-        socket.connect();
-
-        socket.on('connect', () => {
-            console.log('Socket connected');
-            setIsConnected(true);
-
-            socket.emit('join-room', {
-                roomId,
-                user: { id: userId, name: userName, title: userName }
-            });
-        });
-
-        socket.on('disconnect', () => {
-            console.log('Socket disconnected');
-            setIsConnected(false);
-        });
-
-        socket.on('room-update', (updatedRoom: Room) => {
-            if (!isComponentMounted) return;
-            console.log('Room update received:', {
-                currentStory: updatedRoom.currentStory,
-                stories: updatedRoom.stories
-            });
-            setRoom(updatedRoom);
-            setCurrentVote(updatedRoom.currentStory ? updatedRoom.votes[userId] || null : null);
-        });
-
-        socket.on('error', (error: { message: string }) => {
-            if (!isComponentMounted) return;
-            console.error('Socket error:', error);
-            setError(error.message);
-
-            if (error.message.includes('No matching document found')) {
-                router.push('/');
+        const setupSocket = () => {
+            if (!socket.connected) {
+                socket.connect();
             }
-        });
+
+            socket.on('connect', () => {
+                console.log('Socket connected');
+                setIsConnected(true);
+
+                socket.emit('join-room', {
+                    roomId,
+                    user: { id: userId, name: userName, title: userName }
+                });
+            });
+
+            socket.on('disconnect', () => {
+                console.log('Socket disconnected');
+                setIsConnected(false);
+            });
+
+            socket.on('room-update', (updatedRoom: Room) => {
+                if (!isComponentMounted) return;
+                console.log('Room update received:', {
+                    currentStory: updatedRoom.currentStory,
+                    stories: updatedRoom.stories
+                });
+                setRoom(updatedRoom);
+                setCurrentVote(updatedRoom.currentStory ? updatedRoom.votes[userId] || null : null);
+            });
+
+            socket.on('error', (error: { message: string }) => {
+                if (!isComponentMounted) return;
+                console.error('Socket error:', error);
+                setError(error.message);
+
+                if (error.message.includes('No matching document found')) {
+                    router.push('/');
+                }
+            });
+        };
 
         const fetchRoom = async () => {
             try {
@@ -89,6 +94,7 @@ export default function RoomPage() {
             }
         };
 
+        setupSocket();
         fetchRoom();
 
         return () => {
