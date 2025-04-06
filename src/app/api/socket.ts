@@ -8,7 +8,36 @@ export const getSocket = () => {
     socket = io(API_URL, {
       autoConnect: false,
       transports: ['websocket', 'polling'],
-      path: '/socket.io'
+      path: '/socket.io',
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      timeout: 20000,
+    });
+
+    // Add connection error handling
+    socket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error);
+    });
+
+    socket.on('connect_timeout', (timeout) => {
+      console.error('Socket connection timeout:', timeout);
+    });
+
+    socket.on('reconnect_attempt', (attemptNumber) => {
+      console.log('Attempting to reconnect:', attemptNumber);
+    });
+
+    socket.on('reconnect', (attemptNumber) => {
+      console.log('Reconnected after', attemptNumber, 'attempts');
+    });
+
+    socket.on('reconnect_error', (error) => {
+      console.error('Reconnection error:', error);
+    });
+
+    socket.on('reconnect_failed', () => {
+      console.error('Failed to reconnect');
     });
   }
   return socket;
