@@ -1,57 +1,69 @@
 "use client";
 
-import { useState } from 'react';
+import { useRoom } from './hooks/useRoom';
+import { InitialView } from './components/home/InitialView';
+import { CreateRoomForm } from './components/home/CreateRoomForm';
+import { JoinRoomForm } from './components/home/JoinRoomForm';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createRoom } from './utils/api';
-import { v4 as uuidv4 } from 'uuid';
+import { checkRoomExists } from './utils/api';
 
 export default function Home() {
+  const {
+    userName,
+    setUserName,
+    roomName,
+    setRoomName,
+    roomId,
+    setRoomId,
+    isLoading,
+    error,
+    activeForm,
+    setActiveForm,
+    handleCreateRoom,
+    handleJoinRoom,
+  } = useRoom();
+
+  const [lastRoomId, setLastRoomId] = useState<string | null>(null);
+  const [lastRoomExists, setLastRoomExists] = useState<boolean>(false);
   const router = useRouter();
-  const [userName, setUserName] = useState('');
-  const [roomName, setRoomName] = useState('');
-  const [roomId, setRoomId] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
 
-  const handleCreateRoom = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError('');
-
-    try {
-      // Create a user ID if not in local storage
-      let userId = localStorage.getItem('userId');
-      if (!userId) {
-        userId = uuidv4();
-        localStorage.setItem('userId', userId);
+  useEffect(() => {
+    const checkLastRoom = async () => {
+      const storedRoomId = localStorage.getItem('lastRoomId');
+      if (storedRoomId) {
+        try {
+          const exists = await checkRoomExists(storedRoomId);
+          setLastRoomExists(exists);
+          setLastRoomId(exists ? storedRoomId : null);
+          if (!exists) {
+            localStorage.removeItem('lastRoomId');
+          }
+        } catch (err) {
+          console.error('Error checking last room:', err);
+          setLastRoomExists(false);
+          setLastRoomId(null);
+          localStorage.removeItem('lastRoomId');
+        }
       }
+    };
 
-      // Store user name
-      localStorage.setItem('userName', userName);
+    checkLastRoom();
+  }, []);
 
-      const { roomId } = await createRoom(roomName, userId);
-      console.log('Created room with ID:', roomId); // Debug log
+  const handleRejoinRoom = async () => {
+    if (lastRoomId) {
+      const storedUserName = localStorage.getItem('userName');
+      const storedUserId = localStorage.getItem('userId');
 
-      if (!roomId) {
-        throw new Error('Room ID is missing');
+      if (storedUserName && storedUserId) {
+        router.push(`/rooms/${lastRoomId}`);
+      } else {
+        // If we don't have stored credentials, show the join form
+        setActiveForm('join');
+        setRoomId(lastRoomId);
       }
-
-      router.push(`/rooms/${roomId}`);
-    } catch (err) {
-      console.error('Error creating room:', err);
-      setError('Failed to create room. Please try again.');
-    } finally {
-      setIsLoading(false);
     }
-  };
-
-  const handleJoinRoom = () => {
-    if (!roomId || !userName) {
-      setError('Please enter both your name and a room ID');
-      return;
-    }
-    localStorage.setItem('userName', userName);
-    router.push(`/rooms/${roomId}`);
   };
 
   return (
@@ -59,62 +71,45 @@ export default function Home() {
       <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
         <h1 className="text-2xl font-bold text-center mb-6 text-gray-900">Planning Poker</h1>
 
-        <form onSubmit={handleCreateRoom} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-900">Your Name</label>
-            <input
-              type="text"
-              value={userName}
-              onChange={(e) => setUserName(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
-              placeholder="Enter your name"
-              required
-            />
+        {lastRoomId && lastRoomExists && (
+          <div className="mb-6">
+            <button
+              onClick={handleRejoinRoom}
+              className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200"
+            >
+              Rejoin Last Room
+            </button>
           </div>
+        )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-900">Room Name</label>
-            <input
-              type="text"
-              value={roomName}
-              onChange={(e) => setRoomName(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
-              placeholder="Enter room name"
-              required
-            />
-          </div>
-
-          {error && <p className="text-red-500 text-sm">{error}</p>}
-
-          <div
-            onClick={handleCreateRoom}
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200 cursor-pointer"
-          >
-            {isLoading ? 'Creating...' : 'Create Room'}
-          </div>
-        </form>
-
-        <div className="mt-4">
-          <p className="text-center text-sm text-gray-600">or</p>
-          <div className="mt-2">
-            <label className="block text-sm font-medium text-gray-900">Join Existing Room</label>
-            <div className="mt-1 flex rounded-md shadow-sm">
-              <input
-                type="text"
-                value={roomId}
-                onChange={(e) => setRoomId(e.target.value)}
-                className="focus:ring-indigo-500 focus:border-indigo-500 flex-1 block w-full rounded-none rounded-l-md sm:text-sm border-gray-300 text-gray-900"
-                placeholder="Enter room ID"
-              />
-              <div
-                onClick={handleJoinRoom}
-                className="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 rounded-r-md bg-gray-50 text-gray-900 text-sm hover:bg-gray-100 transition-colors duration-200 cursor-pointer"
-              >
-                Join
-              </div>
-            </div>
-          </div>
-        </div>
+        {activeForm === 'initial' ? (
+          <InitialView
+            onCreateRoom={() => setActiveForm('create')}
+            onJoinRoom={() => setActiveForm('join')}
+          />
+        ) : activeForm === 'create' ? (
+          <CreateRoomForm
+            userName={userName}
+            setUserName={setUserName}
+            roomName={roomName}
+            setRoomName={setRoomName}
+            isLoading={isLoading}
+            error={error}
+            onBack={() => setActiveForm('initial')}
+            onSubmit={handleCreateRoom}
+          />
+        ) : (
+          <JoinRoomForm
+            userName={userName}
+            setUserName={setUserName}
+            roomId={roomId}
+            setRoomId={setRoomId}
+            isLoading={isLoading}
+            error={error}
+            onBack={() => setActiveForm('initial')}
+            onJoin={handleJoinRoom}
+          />
+        )}
       </div>
     </main>
   );

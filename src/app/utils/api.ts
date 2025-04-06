@@ -32,4 +32,14 @@ export async function getRoom(roomId: string) {
   }
 
   return response.json();
+}
+
+export async function checkRoomExists(roomId: string): Promise<boolean> {
+  try {
+    const response = await fetch(`${API_URL}/api/rooms/${roomId}`);
+    return response.ok;
+  } catch (error) {
+    console.error('Error checking room existence:', error);
+    return false;
+  }
 } 

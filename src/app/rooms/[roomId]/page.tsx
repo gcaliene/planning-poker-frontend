@@ -18,6 +18,7 @@ export default function RoomPage() {
     const [room, setRoom] = useState<Room | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [showError, setShowError] = useState(false);
     const [currentVote, setCurrentVote] = useState<number | null>(null);
     const [isConnected, setIsConnected] = useState(false);
 
@@ -79,9 +80,15 @@ export default function RoomPage() {
                 if (!isComponentMounted) return;
                 console.error('Socket error:', error);
                 setError(error.message);
+                setShowError(true);
 
                 if (error.message.includes('No matching document found')) {
-                    router.push('/');
+                    setTimeout(() => {
+                        if (isComponentMounted) {
+                            setShowError(false);
+                            router.push('/');
+                        }
+                    }, 3000);
                 }
             });
         };
@@ -111,6 +118,7 @@ export default function RoomPage() {
             isComponentMounted = false;
             if (socket.connected) {
                 socket.emit('leave-room', { roomId, userId: userData.id });
+                localStorage.setItem('lastRoomId', roomId);
             }
             socket.off('room-update');
             socket.off('error');
@@ -225,10 +233,10 @@ export default function RoomPage() {
         );
     }
 
-    if (error) {
+    if (showError) {
         return (
             <div className="flex min-h-screen items-center justify-center">
-                <div className="text-xl text-red-500">{error}</div>
+                <div className="text-xl text-red-500 animate-fade-in-out">{error}</div>
             </div>
         );
     }
@@ -250,6 +258,8 @@ export default function RoomPage() {
                         isConnected={isConnected}
                         onReset={handleReset}
                         isRoomCreator={isRoomCreator}
+                        roomId={roomId}
+                        createdAt={room.createdAt}
                     />
 
                     <div className="flex gap-6">
