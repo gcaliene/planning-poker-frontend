@@ -19,7 +19,6 @@ export default function RoomPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [currentVote, setCurrentVote] = useState<number | null>(null);
-    const [showVotes, setShowVotes] = useState(false);
     const [isConnected, setIsConnected] = useState(false);
 
     const roomId = params.roomId as string;
@@ -55,8 +54,7 @@ export default function RoomPage() {
         socket.on('room-update', (updatedRoom: Room) => {
             if (!isComponentMounted) return;
             setRoom(updatedRoom);
-            setCurrentVote(updatedRoom.votes[userId] || null);
-            setShowVotes(updatedRoom.revealed);
+            setCurrentVote(updatedRoom.currentStory ? updatedRoom.votes[userId] || null : null);
         });
 
         socket.on('error', (error: { message: string }) => {
@@ -75,7 +73,6 @@ export default function RoomPage() {
                 if (!isComponentMounted) return;
                 setRoom(roomData);
                 setCurrentVote(roomData.votes[userId] || null);
-                setShowVotes(roomData.revealed);
             } catch (err) {
                 if (!isComponentMounted) return;
                 console.error('Error fetching room:', err);
@@ -113,6 +110,7 @@ export default function RoomPage() {
         if (!room) return;
         const socket = getSocket();
         socket.emit('reset-voting', { roomId });
+        setCurrentVote(null);
     };
 
     const handleAddStory = (title: string) => {
@@ -229,7 +227,9 @@ export default function RoomPage() {
                         <ParticipantsList
                             participants={room.participants}
                             votes={room.votes}
-                            showVotes={showVotes}
+                            revealed={room.revealed}
+                            isVotingActive={!!room.currentStory}
+                            currentStoryStatus={currentStory?.status}
                         />
                     </div>
 
@@ -239,6 +239,7 @@ export default function RoomPage() {
                         currentVote={currentVote}
                         revealed={room.revealed}
                         onVote={handleVote}
+                        isVotingActive={!!room.currentStory}
                     />
                 </div>
             </div>
