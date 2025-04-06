@@ -250,6 +250,8 @@ export default function RoomPage() {
                         isConnected={isConnected}
                         onReset={handleReset}
                         isRoomCreator={isRoomCreator}
+                        roomId={roomId}
+                        createdAt={room.createdAt}
                     />
 
                     <div className="flex gap-6">
