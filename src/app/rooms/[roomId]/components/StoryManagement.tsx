@@ -29,8 +29,6 @@ export const StoryManagement: React.FC<StoryManagementProps> = ({
         setIsAddingStory(false);
     };
 
-    if (!isRoomCreator) return null;
-
     return (
         <div className="mb-6">
             {/* Completed Stories */}
@@ -54,7 +52,7 @@ export const StoryManagement: React.FC<StoryManagementProps> = ({
                                     <div className="items-center mt-1">
                                         <p className="text-xs text-gray-600">{story.status}</p>
                                         {story.points !== null && (
-                                            <p className="text-xs font-medium text-gray-900">Average: {story.points}</p>
+                                            <p className="text-xs font-medium text-gray-900">Points: {story.points}</p>
                                         )}
                                     </div>
                                 </div>
@@ -64,17 +62,21 @@ export const StoryManagement: React.FC<StoryManagementProps> = ({
                 </div>
             )}
 
+            {/* Story Management Header */}
             <div className="flex justify-between items-center mb-2 max-w-md px-3 py-2">
                 <h2 className="text-xl font-semibold text-gray-900">Stories</h2>
-                <div
-                    onClick={() => setIsAddingStory(!isAddingStory)}
-                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200 cursor-pointer"
-                >
-                    {isAddingStory ? 'Cancel' : 'Add Story'}
-                </div>
+                {isRoomCreator && (
+                    <div
+                        onClick={() => setIsAddingStory(!isAddingStory)}
+                        className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200 cursor-pointer"
+                    >
+                        {isAddingStory ? 'Cancel' : 'Add Story'}
+                    </div>
+                )}
             </div>
 
-            {isAddingStory && (
+            {/* Add Story Form (only for room creator) */}
+            {isRoomCreator && isAddingStory && (
                 <div className="mb-2 flex gap-2 max-w-md px-3 py-2">
                     <input
                         type="text"
@@ -103,35 +105,37 @@ export const StoryManagement: React.FC<StoryManagementProps> = ({
                             <h3 className="font-medium text-gray-900">{story.title}</h3>
                             <p className="text-sm text-gray-600">Status: {story.status}</p>
                             {story.points !== null && (
-                                <p className="text-sm text-gray-600">Average: {story.points}</p>
+                                <p className="text-sm text-gray-600">Points: {story.points}</p>
                             )}
                         </div>
-                        <div className="flex gap-2">
-                            {story.status === 'pending' && (
-                                <div
-                                    onClick={() => onStartVoting(story.id)}
-                                    className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 cursor-pointer text-sm"
-                                >
-                                    Start Voting
-                                </div>
-                            )}
-                            {story.status === 'voting' && (
-                                <>
+                        {isRoomCreator && (
+                            <div className="flex gap-2">
+                                {story.status === 'pending' && (
                                     <div
-                                        onClick={() => onCompleteStory(story.id)}
-                                        className="px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200 cursor-pointer text-sm"
+                                        onClick={() => onStartVoting(story.id)}
+                                        className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 cursor-pointer text-sm"
                                     >
-                                        Complete
+                                        Start Voting
                                     </div>
-                                    <div
-                                        onClick={() => onSkipStory(story.id)}
-                                        className="px-3 py-1 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-colors duration-200 cursor-pointer text-sm"
-                                    >
-                                        Skip
-                                    </div>
-                                </>
-                            )}
-                        </div>
+                                )}
+                                {story.status === 'voting' && (
+                                    <>
+                                        <div
+                                            onClick={() => onCompleteStory(story.id)}
+                                            className="px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200 cursor-pointer text-sm"
+                                        >
+                                            Complete
+                                        </div>
+                                        <div
+                                            onClick={() => onSkipStory(story.id)}
+                                            className="px-3 py-1 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-colors duration-200 cursor-pointer text-sm"
+                                        >
+                                            Skip
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        )}
                     </div>
                 ))}
             </div>

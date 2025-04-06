@@ -4,9 +4,10 @@ interface RoomHeaderProps {
     roomName: string;
     isConnected: boolean;
     onReset: () => void;
+    isRoomCreator: boolean;
 }
 
-export const RoomHeader: React.FC<RoomHeaderProps> = ({ roomName, isConnected, onReset }) => {
+export const RoomHeader: React.FC<RoomHeaderProps> = ({ roomName, isConnected, onReset, isRoomCreator }) => {
     return (
         <div className="flex justify-between items-center mb-6">
             <div>
@@ -15,14 +16,16 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({ roomName, isConnected, o
                     <p className="text-sm text-red-500 mt-1">Disconnected from server. Attempting to reconnect...</p>
                 )}
             </div>
-            <div className="flex gap-2">
-                <div
-                    onClick={onReset}
-                    className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors duration-200 cursor-pointer"
-                >
-                    Reset
+            {isRoomCreator && (
+                <div className="flex gap-2">
+                    <div
+                        onClick={onReset}
+                        className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors duration-200 cursor-pointer"
+                    >
+                        Reset
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 }; 
