@@ -70,6 +70,12 @@ export function useRoom() {
         return;
       }
 
+      let userId = localStorage.getItem('userId');
+      if (!userId) {
+        userId = uuidv4();
+        localStorage.setItem('userId', userId);
+      }
+
       localStorage.setItem('userName', userName);
       router.push(`/rooms/${roomId}`);
     } catch (err) {
