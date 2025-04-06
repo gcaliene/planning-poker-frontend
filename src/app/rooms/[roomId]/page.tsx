@@ -231,159 +231,166 @@ export default function RoomPage() {
                         </div>
                     </div>
 
-                    {/* Story Management */}
-                    {isRoomCreator && (
-                        <div className="mb-6">
-                            {/* Completed Stories */}
-                            {room.stories.some(s => s.status === 'completed' || s.status === 'skipped') && (
-                                <div className="mt-6">
-                                    <div
-                                        onClick={() => setShowCompletedStories(!showCompletedStories)}
-                                        className="flex items-center gap-2 cursor-pointer text-gray-600 hover:text-gray-900"
-                                    >
-                                        <h3 className="text-lg font-medium">Completed Stories</h3>
-                                        <span>{showCompletedStories ? '▼' : '▶'}</span>
-                                    </div>
-                                    {showCompletedStories && (
-                                        <div className="mt-2 grid grid-cols-8 gap-2">
-                                            {room.stories.filter(s => s.status === 'completed' || s.status === 'skipped').map((story: Story) => (
-                                                <div
-                                                    key={story.id}
-                                                    className="p-3 bg-gray-50 rounded-md"
-                                                >
-                                                    <h3 className="font-medium text-gray-900 text-sm">{story.title}</h3>
-                                                    <div className="items-center mt-1">
-                                                        <p className="text-xs text-gray-600">{story.status}</p>
-                                                        {story.points !== null && (
-                                                            <p className="text-xs font-medium text-gray-900">Points: {story.points}</p>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
+                    <div className="flex gap-6">
+                        {/* Left Column - Stories and Current Story */}
+                        <div className="flex-1">
+                            {/* Current Story */}
+                            {currentStory && (
+                                <div className="mb-6 p-4 bg-gray-50 rounded-md max-w-md">
+                                    <h2 className="text-xl font-semibold mb-2 text-gray-900">
+                                        Current Story: {currentStory.title}
+                                    </h2>
+                                    <p className="text-gray-600">Status: {currentStory.status}</p>
+                                    {currentStory.points !== null && (
+                                        <p className="text-gray-600">Points: {currentStory.points}</p>
                                     )}
                                 </div>
                             )}
-                            <div className="flex justify-between items-center mb-2 max-w-md px-3 py-2 ">
-                                <h2 className="text-xl font-semibold text-gray-900">Stories</h2>
-                                <div
-                                    onClick={() => setIsAddingStory(!isAddingStory)}
-                                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200 cursor-pointer"
-                                >
-                                    {isAddingStory ? 'Cancel' : 'Add Story'}
-                                </div>
-                            </div>
 
-                            {isAddingStory && (
-                                <div className="mb-2 flex gap-2 max-w-md px-3 py-2">
-                                    <input
-                                        type="text"
-                                        value={newStoryTitle}
-                                        onChange={(e) => setNewStoryTitle(e.target.value)}
-                                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
-                                        placeholder="Enter story title"
-                                    />
-                                    <div
-                                        onClick={handleAddStory}
-                                        className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors duration-200 cursor-pointer"
-                                    >
-                                        Add
+                            {/* Story Management */}
+                            {isRoomCreator && (
+                                <div className="mb-6">
+                                    {/* Completed Stories */}
+                                    {room.stories.some(s => s.status === 'completed' || s.status === 'skipped') && (
+                                        <div className="mt-6">
+                                            <div
+                                                onClick={() => setShowCompletedStories(!showCompletedStories)}
+                                                className="flex items-center gap-2 cursor-pointer text-gray-600 hover:text-gray-900"
+                                            >
+                                                <h3 className="text-lg font-medium">Completed Stories</h3>
+                                                <span>{showCompletedStories ? '▼' : '▶'}</span>
+                                            </div>
+                                            {showCompletedStories && (
+                                                <div className="mt-2 grid grid-cols-8 gap-2">
+                                                    {room.stories.filter(s => s.status === 'completed' || s.status === 'skipped').map((story: Story) => (
+                                                        <div
+                                                            key={story.id}
+                                                            className="p-3 bg-gray-50 rounded-md"
+                                                        >
+                                                            <h3 className="font-medium text-gray-900 text-sm">{story.title}</h3>
+                                                            <div className="items-center mt-1">
+                                                                <p className="text-xs text-gray-600">{story.status}</p>
+                                                                {story.points !== null && (
+                                                                    <p className="text-xs font-medium text-gray-900">Points: {story.points}</p>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                    <div className="flex justify-between items-center mb-2 max-w-md px-3 py-2 ">
+                                        <h2 className="text-xl font-semibold text-gray-900">Stories</h2>
+                                        <div
+                                            onClick={() => setIsAddingStory(!isAddingStory)}
+                                            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200 cursor-pointer"
+                                        >
+                                            {isAddingStory ? 'Cancel' : 'Add Story'}
+                                        </div>
+                                    </div>
+
+                                    {isAddingStory && (
+                                        <div className="mb-2 flex gap-2 max-w-md px-3 py-2">
+                                            <input
+                                                type="text"
+                                                value={newStoryTitle}
+                                                onChange={(e) => setNewStoryTitle(e.target.value)}
+                                                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
+                                                placeholder="Enter story title"
+                                            />
+                                            <div
+                                                onClick={handleAddStory}
+                                                className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors duration-200 cursor-pointer"
+                                            >
+                                                Add
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Active Stories */}
+                                    <div className="space-y-2 max-w-md">
+                                        {room.stories.filter(s => s.status !== 'completed' && s.status !== 'skipped').map((story: Story) => (
+                                            <div
+                                                key={story.id}
+                                                className="p-4 bg-gray-50 rounded-md flex justify-between items-center"
+                                            >
+                                                <div>
+                                                    <h3 className="font-medium text-gray-900">{story.title}</h3>
+                                                    <p className="text-sm text-gray-600">Status: {story.status}</p>
+                                                    {story.points !== null && (
+                                                        <p className="text-sm text-gray-600">Points: {story.points}</p>
+                                                    )}
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    {story.status === 'pending' && (
+                                                        <div
+                                                            onClick={() => handleStartVoting(story.id)}
+                                                            className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 cursor-pointer text-sm"
+                                                        >
+                                                            Start Voting
+                                                        </div>
+                                                    )}
+                                                    {story.status === 'voting' && (
+                                                        <>
+                                                            <div
+                                                                onClick={() => handleCompleteStory(story.id)}
+                                                                className="px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200 cursor-pointer text-sm"
+                                                            >
+                                                                Complete
+                                                            </div>
+                                                            <div
+                                                                onClick={() => handleSkipStory(story.id)}
+                                                                className="px-3 py-1 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-colors duration-200 cursor-pointer text-sm"
+                                                            >
+                                                                Skip
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
                             )}
+                        </div>
 
-                            {/* Active Stories */}
-                            <div className="space-y-2 max-w-md">
-                                {room.stories.filter(s => s.status !== 'completed' && s.status !== 'skipped').map((story: Story) => (
+                        {/* Right Column - Participants */}
+                        <div className="w-64">
+                            <h2 className="text-xl font-semibold mb-4 text-gray-900">Participants</h2>
+                            <div className="space-y-2">
+                                {room.participants.map((participant) => (
                                     <div
-                                        key={story.id}
-                                        className="p-4 bg-gray-50 rounded-md flex justify-between items-center"
+                                        key={participant.id}
+                                        className="p-3 bg-gray-50 rounded-md"
                                     >
-                                        <div>
-                                            <h3 className="font-medium text-gray-900">{story.title}</h3>
-                                            <p className="text-sm text-gray-600">Status: {story.status}</p>
-                                            {story.points !== null && (
-                                                <p className="text-sm text-gray-600">Points: {story.points}</p>
-                                            )}
-                                        </div>
-                                        <div className="flex gap-2">
-                                            {story.status === 'pending' && (
-                                                <div
-                                                    onClick={() => handleStartVoting(story.id)}
-                                                    className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 cursor-pointer text-sm"
-                                                >
-                                                    Start Voting
-                                                </div>
-                                            )}
-                                            {story.status === 'voting' && (
-                                                <>
-                                                    <div
-                                                        onClick={() => handleCompleteStory(story.id)}
-                                                        className="px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200 cursor-pointer text-sm"
-                                                    >
-                                                        Complete
-                                                    </div>
-                                                    <div
-                                                        onClick={() => handleSkipStory(story.id)}
-                                                        className="px-3 py-1 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-colors duration-200 cursor-pointer text-sm"
-                                                    >
-                                                        Skip
-                                                    </div>
-                                                </>
-                                            )}
-                                        </div>
+                                        <span className="font-medium text-gray-900">{participant.title}</span>
+                                        {showVotes && (
+                                            <span className="block text-sm font-bold text-gray-900 mt-1">
+                                                {room.votes[participant.id] !== undefined ?
+                                                    room.votes[participant.id] === -1 ? '?' : room.votes[participant.id]
+                                                    : '-'}
+                                            </span>
+                                        )}
                                     </div>
                                 ))}
                             </div>
                         </div>
-                    )}
-
-                    {/* Current Story */}
-                    {currentStory && (
-                        <div className="mb-6 p-4 bg-gray-50 rounded-md max-w-md">
-                            <h2 className="text-xl font-semibold mb-2 text-gray-900">
-                                Current Story: {currentStory.title}
-                            </h2>
-                            <p className="text-gray-600">Status: {currentStory.status}</p>
-                            {currentStory.points !== null && (
-                                <p className="text-gray-600">Points: {currentStory.points}</p>
-                            )}
-                        </div>
-                    )}
-
-                    {/* Voting Cards */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
-                        {pokerValues.map((value) => (
-                            <div
-                                key={value}
-                                onClick={() => !room.revealed && handleVote(value)}
-                                className={`p-4 text-xl font-bold rounded-md border-2 transition-colors duration-200 cursor-pointer ${currentVote === value
-                                    ? 'border-indigo-600 bg-indigo-50 text-indigo-600'
-                                    : 'border-gray-200 hover:border-indigo-300 text-gray-900'
-                                    } ${room.revealed ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            >
-                                {value === -1 ? '?' : value}
-                            </div>
-                        ))}
                     </div>
 
-                    {/* Participants */}
-                    <div className="mt-8">
-                        <h2 className="text-xl font-semibold mb-4 text-gray-900">Participants</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {room.participants.map((participant) => (
+                    {/* Voting Cards - Full Width */}
+                    <div className="mt-6">
+                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                            {pokerValues.map((value) => (
                                 <div
-                                    key={participant.id}
-                                    className="p-4 bg-gray-50 rounded-md flex items-center justify-between"
+                                    key={value}
+                                    onClick={() => !room.revealed && handleVote(value)}
+                                    className={`p-4 text-xl font-bold rounded-md border-2 transition-colors duration-200 cursor-pointer ${currentVote === value
+                                        ? 'border-indigo-600 bg-indigo-50 text-indigo-600'
+                                        : 'border-gray-200 hover:border-indigo-300 text-gray-900'
+                                        } ${room.revealed ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 >
-                                    <span className="font-medium text-gray-900">{participant.title}</span>
-                                    {showVotes && (
-                                        <span className="text-xl font-bold text-gray-900">
-                                            {room.votes[participant.id] !== undefined ?
-                                                room.votes[participant.id] === -1 ? '?' : room.votes[participant.id]
-                                                : '-'}
-                                        </span>
-                                    )}
+                                    {value === -1 ? '?' : value}
                                 </div>
                             ))}
                         </div>
