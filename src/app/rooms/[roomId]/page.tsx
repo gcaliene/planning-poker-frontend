@@ -18,6 +18,7 @@ export default function RoomPage() {
     const [newStoryTitle, setNewStoryTitle] = useState('');
     const [isAddingStory, setIsAddingStory] = useState(false);
     const [isConnected, setIsConnected] = useState(false);
+    const [showCompletedStories, setShowCompletedStories] = useState(false);
 
     const roomId = params.roomId as string;
     const userId = localStorage.getItem('userId') || uuidv4();
@@ -113,12 +114,6 @@ export default function RoomPage() {
         socket.emit('submit-vote', { roomId, userId, vote: value });
     };
 
-    const handleReveal = () => {
-        if (!room || room.revealed) return;
-        const socket = getSocket();
-        socket.emit('reveal-votes', { roomId });
-    };
-
     const handleReset = () => {
         if (!room) return;
         const socket = getSocket();
@@ -164,6 +159,8 @@ export default function RoomPage() {
             return;
         }
         const socket = getSocket();
+        // First reveal votes, then complete the story
+        socket.emit('reveal-votes', { roomId });
         socket.emit('complete-story', {
             roomId,
             storyId,
@@ -212,7 +209,7 @@ export default function RoomPage() {
     const pokerValues = [0, 0.5, 1, 2, 3, 5, 8, 13, 20, 40, 100, -1]; // -1 represents '?'
 
     const currentStory = room.currentStory ? room.stories.find((s: Story) => s.id === room.currentStory) : null;
-
+    console.log(room);
     return (
         <main className="min-h-screen bg-gray-50 p-4">
             <div className="max-w-6xl mx-auto">
@@ -226,13 +223,6 @@ export default function RoomPage() {
                         </div>
                         <div className="flex gap-2">
                             <div
-                                onClick={handleReveal}
-                                className={`px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors duration-200 cursor-pointer ${room.revealed ? 'opacity-50 cursor-not-allowed' : ''
-                                    }`}
-                            >
-                                Reveal Votes
-                            </div>
-                            <div
                                 onClick={handleReset}
                                 className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors duration-200 cursor-pointer"
                             >
@@ -244,7 +234,7 @@ export default function RoomPage() {
                     {/* Story Management */}
                     {isRoomCreator && (
                         <div className="mb-6">
-                            <div className="flex justify-between items-center mb-4">
+                            <div className="flex justify-between items-center mb-2 max-w-md px-3 py-2 ">
                                 <h2 className="text-xl font-semibold text-gray-900">Stories</h2>
                                 <div
                                     onClick={() => setIsAddingStory(!isAddingStory)}
@@ -255,7 +245,7 @@ export default function RoomPage() {
                             </div>
 
                             {isAddingStory && (
-                                <div className="mb-4 flex gap-2">
+                                <div className="mb-2 flex gap-2 max-w-md px-3 py-2">
                                     <input
                                         type="text"
                                         value={newStoryTitle}
@@ -272,8 +262,9 @@ export default function RoomPage() {
                                 </div>
                             )}
 
-                            <div className="space-y-2">
-                                {room.stories.map((story: Story) => (
+                            {/* Active Stories */}
+                            <div className="space-y-2 max-w-md">
+                                {room.stories.filter(s => s.status !== 'completed' && s.status !== 'skipped').map((story: Story) => (
                                     <div
                                         key={story.id}
                                         className="p-4 bg-gray-50 rounded-md flex justify-between items-center"
@@ -314,6 +305,37 @@ export default function RoomPage() {
                                     </div>
                                 ))}
                             </div>
+
+                            {/* Completed Stories */}
+                            {room.stories.some(s => s.status === 'completed' || s.status === 'skipped') && (
+                                <div className="mt-6">
+                                    <div
+                                        onClick={() => setShowCompletedStories(!showCompletedStories)}
+                                        className="flex items-center gap-2 cursor-pointer text-gray-600 hover:text-gray-900"
+                                    >
+                                        <h3 className="text-lg font-medium">Completed Stories</h3>
+                                        <span>{showCompletedStories ? '▼' : '▶'}</span>
+                                    </div>
+                                    {showCompletedStories && (
+                                        <div className="mt-2 space-y-2 max-w-md">
+                                            {room.stories.filter(s => s.status === 'completed' || s.status === 'skipped').map((story: Story) => (
+                                                <div
+                                                    key={story.id}
+                                                    className="p-4 bg-gray-50 rounded-md flex justify-between items-center"
+                                                >
+                                                    <div>
+                                                        <h3 className="font-medium text-gray-900">{story.title}</h3>
+                                                        <p className="text-sm text-gray-600">Status: {story.status}</p>
+                                                        {story.points !== null && (
+                                                            <p className="text-sm text-gray-600">Points: {story.points}</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -354,10 +376,12 @@ export default function RoomPage() {
                                     key={participant.id}
                                     className="p-4 bg-gray-50 rounded-md flex items-center justify-between"
                                 >
-                                    <span className="font-medium text-gray-900">{participant.name}</span>
+                                    <span className="font-medium text-gray-900">{participant.title}</span>
                                     {showVotes && (
                                         <span className="text-xl font-bold text-gray-900">
-                                            {room.votes[participant.id] !== undefined ? room.votes[participant.id] : '?'}
+                                            {room.votes[participant.id] !== undefined ?
+                                                room.votes[participant.id] === -1 ? '?' : room.votes[participant.id]
+                                                : '-'}
                                         </span>
                                     )}
                                 </div>
