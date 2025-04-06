@@ -7,12 +7,20 @@ export type FormType = 'initial' | 'create' | 'join';
 
 export function useRoom() {
   const router = useRouter();
-  const [userName, setUserName] = useState('');
+  const [userName, setUserName] = useState(() => {
+    // Initialize userName from localStorage if it exists
+    return localStorage.getItem('userName') || '';
+  });
   const [roomName, setRoomName] = useState('');
   const [roomId, setRoomId] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [activeForm, setActiveForm] = useState<FormType>('initial');
+
+  const handleFormSwitch = (form: FormType) => {
+    setError('');
+    setActiveForm(form);
+  };
 
   const handleCreateRoom = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,7 +83,7 @@ export function useRoom() {
     isLoading,
     error,
     activeForm,
-    setActiveForm,
+    setActiveForm: handleFormSwitch,
     handleCreateRoom,
     handleJoinRoom,
   };
