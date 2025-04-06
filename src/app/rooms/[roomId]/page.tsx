@@ -70,7 +70,9 @@ export default function RoomPage() {
                 if (!isComponentMounted) return;
                 console.log('Room update received:', {
                     currentStory: updatedRoom.currentStory,
-                    stories: updatedRoom.stories
+                    stories: updatedRoom.stories,
+                    participants: updatedRoom.participants.map(p => ({ id: p.id, name: p.title })),
+                    votes: updatedRoom.votes
                 });
                 setRoom(updatedRoom);
                 setCurrentVote(updatedRoom.currentStory ? updatedRoom.votes[userData.id] || null : null);

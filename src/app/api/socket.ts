@@ -39,6 +39,19 @@ export const getSocket = () => {
     socket.on('reconnect_failed', () => {
       console.error('Failed to reconnect');
     });
+
+    // Add handler for disconnect event
+    socket.on('disconnect', (reason) => {
+      console.log('[SocketService] User disconnected:', reason);
+      // Emit leave-room event when socket disconnects
+      if (socket.connected) {
+        const roomId = localStorage.getItem('lastRoomId');
+        const userId = localStorage.getItem('userId');
+        if (roomId && userId) {
+          socket.emit('leave-room', { roomId, userId });
+        }
+      }
+    });
   }
   return socket;
 }; 
