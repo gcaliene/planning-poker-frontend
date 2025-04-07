@@ -46,6 +46,12 @@ export default function RoomPage() {
         const socket = getSocket();
         let isComponentMounted = true;
 
+        const handleBeforeUnload = () => {
+            if (socket.connected) {
+                socket.emit('leave-room', { roomId, userId: userData.id });
+            }
+        };
+
         const setupSocket = () => {
             if (!socket.connected) {
                 socket.connect();
@@ -113,11 +119,16 @@ export default function RoomPage() {
             }
         };
 
+        // Add beforeunload event listener
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
         setupSocket();
         fetchRoom();
 
         return () => {
             isComponentMounted = false;
+            // Remove beforeunload event listener
+            window.removeEventListener('beforeunload', handleBeforeUnload);
             if (socket.connected) {
                 socket.emit('leave-room', { roomId, userId: userData.id });
                 localStorage.setItem('lastRoomId', roomId);

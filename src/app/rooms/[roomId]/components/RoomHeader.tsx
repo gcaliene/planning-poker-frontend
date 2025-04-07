@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FaCopy, FaHome } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
+import { getSocket } from '../../../api/socket';
 
 interface RoomHeaderProps {
     roomName: string;
@@ -32,6 +33,35 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
         }
     };
 
+    const handleBackToHome = async () => {
+        const socket = getSocket();
+        const userId = localStorage.getItem('userId');
+
+        if (userId) {
+            try {
+                console.log('Emitting leave-room event');
+                socket.emit('leave-room', { roomId, userId });
+                console.log('Leave-room event emitted');
+
+                // Store last room ID before navigating
+                localStorage.setItem('lastRoomId', roomId);
+                console.log('Last room ID stored');
+
+                // Navigate to home
+                router.push('/');
+                console.log('Navigated to home');
+            } catch (err) {
+                console.error('Error leaving room:', err);
+                localStorage.clear();
+                router.push('/');
+            }
+        } else {
+            // Clear localStorage if no userId
+            localStorage.clear();
+            router.push('/');
+        }
+    };
+
     return (
         <div className="flex justify-between items-start mb-6">
             <div>
@@ -60,7 +90,7 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
             </div>
             <div className="flex gap-2">
                 <button
-                    onClick={() => router.push('/')}
+                    onClick={handleBackToHome}
                     className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors duration-200 flex items-center gap-2"
                 >
                     <FaHome className="w-4 h-4" />
