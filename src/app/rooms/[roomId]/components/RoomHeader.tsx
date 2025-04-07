@@ -52,9 +52,12 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
                 console.log('Navigated to home');
             } catch (err) {
                 console.error('Error leaving room:', err);
+                localStorage.clear();
                 router.push('/');
             }
         } else {
+            // Clear localStorage if no userId
+            localStorage.clear();
             router.push('/');
         }
     };
