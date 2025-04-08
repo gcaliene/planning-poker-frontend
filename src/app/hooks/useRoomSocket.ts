@@ -14,16 +14,16 @@ export function useRoomSocket(roomId: string, userId: string, userName: string) 
     const [currentVote, setCurrentVote] = useState<number | null>(null);
     const [isConnected, setIsConnected] = useState(false);
 
-    const debouncedLeaveRoom = debounce(() => {
+    const emitLeaveRoom = useCallback(() => {
         const socket = getSocket();
         if (socket.connected) {
             console.log('Emitting leave-room event');
             socket.emit('leave-room', { roomId, userId });
             socket.disconnect();
         }
-    }, 500);
+    }, [roomId, userId]);
 
-    const emitLeaveRoom = useCallback(debouncedLeaveRoom, [roomId, userId]);
+    const debouncedLeaveRoom = useCallback(debounce(emitLeaveRoom, 500), [emitLeaveRoom]);
 
     useEffect(() => {
         console.log('main useEffect Room ID:', roomId);
@@ -31,30 +31,27 @@ export function useRoomSocket(roomId: string, userId: string, userName: string) 
         let isComponentMounted = true;
 
         const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-            // Prevent the default behavior to ensure our cleanup code runs
             e.preventDefault();
-            // Force immediate leave-room emission without debounce
             if (socket.connected) {
                 socket.emit('leave-room', { roomId, userId });
                 socket.disconnect();
             }
-            // Chrome requires returnValue to be set
             e.returnValue = '';
         };
 
         const handlePopState = () => {
             console.log('Browser back button pressed');
-            emitLeaveRoom();
+            debouncedLeaveRoom();
         };
 
         const handleHashChange = () => {
             console.log('Hash changed');
-            emitLeaveRoom();
+            debouncedLeaveRoom();
         };
 
         const handlePageHide = () => {
             console.log('Page being hidden');
-            emitLeaveRoom();
+            debouncedLeaveRoom();
         };
 
         const setupSocket = () => {
@@ -142,7 +139,7 @@ export function useRoomSocket(roomId: string, userId: string, userName: string) 
             window.removeEventListener('pagehide', handlePageHide);
 
             if (socket.connected) {
-                emitLeaveRoom();
+                debouncedLeaveRoom();
                 localStorage.setItem('lastRoomId', roomId);
             }
             socket.off('room-update');
@@ -151,7 +148,7 @@ export function useRoomSocket(roomId: string, userId: string, userName: string) 
             socket.off('disconnect');
             socket.disconnect();
         };
-    }, [roomId, userId, userName, router, emitLeaveRoom]);
+    }, [roomId, userId, userName, router, debouncedLeaveRoom]);
 
     return {
         room,

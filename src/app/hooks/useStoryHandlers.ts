@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { getSocket } from '../api/socket';
-import { Room, Story } from '../../types';
+import { Room } from '../../types';
 
 export function useStoryHandlers(roomId: string, userId: string, room: Room | null) {
     const handleVote = useCallback((value: number) => {
