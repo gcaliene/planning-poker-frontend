@@ -15,6 +15,7 @@ export function useRoomSocket(roomId: string, userId: string, userName: string) 
     const [isConnected, setIsConnected] = useState(false);
 
     const emitLeaveRoom = useCallback(() => {
+        console.log('Emitting leave-room event');
         const socket = getSocket();
         if (socket.connected) {
             console.log('Emitting leave-room event');
@@ -32,10 +33,8 @@ export function useRoomSocket(roomId: string, userId: string, userName: string) 
 
         const handleBeforeUnload = (e: BeforeUnloadEvent) => {
             e.preventDefault();
-            if (socket.connected) {
-                socket.emit('leave-room', { roomId, userId });
-                socket.disconnect();
-            }
+            // Use immediate leave-room emission for beforeunload
+            emitLeaveRoom();
             e.returnValue = '';
         };
 
