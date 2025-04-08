@@ -1,9 +1,8 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getSocket } from '../api/socket';
 import { getRoom } from '../utils/api';
 import { Room } from '../../types';
-import { debounce } from '../utils/debounce';
 
 export function useRoomSocket(roomId: string, userId: string, userName: string) {
     const router = useRouter();
@@ -14,43 +13,41 @@ export function useRoomSocket(roomId: string, userId: string, userName: string) 
     const [currentVote, setCurrentVote] = useState<number | null>(null);
     const [isConnected, setIsConnected] = useState(false);
 
-    const emitLeaveRoom = useCallback(() => {
-        console.log('Trying to emit leave-room event from useRoomSocket');
-        const socket = getSocket();
-        if (socket.connected) {
-            console.log('Emitting leave-room event from useRoomSocket');
-            socket.emit('leave-room', { roomId, userId });
-            socket.disconnect();
-        }
-    }, [roomId, userId]);
-
-    const debouncedLeaveRoom = useCallback(debounce(emitLeaveRoom, 500), [emitLeaveRoom]);
-
     useEffect(() => {
         console.log('main useEffect Room ID:', roomId);
         const socket = getSocket();
         let isComponentMounted = true;
 
+        const emitLeaveRoom = () => {
+            console.log('starting emitting leave-room event from useRoomSocket...');
+            const socket = getSocket();
+            if (socket.connected) {
+                console.log('Emitting leave-room event from useRoomSocket');
+                socket.emit('leave-room', { roomId, userId });
+                socket.disconnect();
+            }
+        };
+
         const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            console.log('handleBeforeUnload from useRoomSocket');
             e.preventDefault();
-            // Use immediate leave-room emission for beforeunload
             emitLeaveRoom();
             e.returnValue = '';
         };
 
         const handlePopState = () => {
             console.log('Browser back button pressed');
-            debouncedLeaveRoom();
+            emitLeaveRoom();
         };
 
         const handleHashChange = () => {
             console.log('Hash changed');
-            debouncedLeaveRoom();
+            emitLeaveRoom();
         };
 
         const handlePageHide = () => {
             console.log('Page being hidden');
-            debouncedLeaveRoom();
+            emitLeaveRoom();
         };
 
         const setupSocket = () => {
@@ -138,7 +135,7 @@ export function useRoomSocket(roomId: string, userId: string, userName: string) 
             window.removeEventListener('pagehide', handlePageHide);
 
             if (socket.connected) {
-                debouncedLeaveRoom();
+                emitLeaveRoom();
                 localStorage.setItem('lastRoomId', roomId);
             }
             socket.off('room-update');
@@ -147,7 +144,7 @@ export function useRoomSocket(roomId: string, userId: string, userName: string) 
             socket.off('disconnect');
             socket.disconnect();
         };
-    }, [roomId, userId, userName, router, debouncedLeaveRoom]);
+    }, [roomId, userId, userName, router]);
 
     return {
         room,
