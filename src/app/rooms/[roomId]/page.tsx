@@ -1,27 +1,20 @@
 "use client";
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getSocket } from '../../api/socket';
-import { getRoom } from '../../utils/api';
-import { Room, Story } from '../../../types';
 import { v4 as uuidv4 } from 'uuid';
+import { Story } from '../../../types';
 import { RoomHeader } from './components/RoomHeader';
 import { CurrentStory } from './components/CurrentStory';
 import { StoryManagement } from './components/StoryManagement';
 import { ParticipantsList } from './components/ParticipantsList';
 import { VotingCards } from './components/VotingCards';
+import { useRoomSocket } from '../../hooks/useRoomSocket';
+import { useStoryHandlers } from '../../hooks/useStoryHandlers';
 
 export default function RoomPage() {
     const params = useParams();
     const router = useRouter();
-    const [room, setRoom] = useState<Room | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
-    const [showError, setShowError] = useState(false);
-    const [currentVote, setCurrentVote] = useState<number | null>(null);
-    const [isConnected, setIsConnected] = useState(false);
-
     const roomId = params.roomId as string;
 
     // Use useMemo to prevent unnecessary re-renders
@@ -38,241 +31,25 @@ export default function RoomPage() {
         }
     }, [userData.name, router]);
 
-    // Main effect for room and socket management
-    useEffect(() => {
-        console.log('main useEffect Room ID:', roomId);
-        if (!userData.name) return;
+    const {
+        room,
+        loading,
+        error,
+        showError,
+        currentVote,
+        isConnected
+    } = useRoomSocket(roomId, userData.id, userData.name);
 
-        const socket = getSocket();
-        let isComponentMounted = true;
-
-        const emitLeaveRoom = () => {
-            if (socket.connected) {
-                console.log('Emitting leave-room event');
-                socket.emit('leave-room', { roomId, userId: userData.id });
-            }
-        };
-
-        const handleBeforeUnload = () => {
-            emitLeaveRoom();
-        };
-
-        const handlePopState = () => {
-            console.log('Browser back button pressed');
-            emitLeaveRoom();
-        };
-
-        const handleHashChange = () => {
-            console.log('Hash changed');
-            emitLeaveRoom();
-        };
-
-        const handleVisibilityChange = () => {
-            if (document.visibilityState === 'hidden') {
-                console.log('Page hidden');
-                emitLeaveRoom();
-            }
-        };
-
-        const handlePageHide = () => {
-            console.log('Page being hidden');
-            emitLeaveRoom();
-        };
-
-        const setupSocket = () => {
-            if (!socket.connected) {
-                socket.connect();
-            }
-
-            socket.on('connect', () => {
-                console.log('Socket connected');
-                setIsConnected(true);
-
-                socket.emit('join-room', {
-                    roomId,
-                    user: { id: userData.id, name: userData.name, title: userData.name }
-                });
-            });
-
-            socket.on('disconnect', () => {
-                console.log('Socket disconnected');
-                setIsConnected(false);
-            });
-
-            socket.on('room-update', (updatedRoom: Room) => {
-                if (!isComponentMounted) return;
-                console.log('Room update received:', {
-                    currentStory: updatedRoom.currentStory,
-                    stories: updatedRoom.stories,
-                    participants: updatedRoom.participants.map(p => ({ id: p.id, name: p.title })),
-                    votes: updatedRoom.votes
-                });
-                setRoom(updatedRoom);
-                setCurrentVote(updatedRoom.currentStory ? updatedRoom.votes[userData.id] || null : null);
-            });
-
-            socket.on('error', (error: { message: string }) => {
-                if (!isComponentMounted) return;
-                console.error('Socket error:', error);
-                setError(error.message);
-                setShowError(true);
-
-                if (error.message.includes('No matching document found')) {
-                    setTimeout(() => {
-                        if (isComponentMounted) {
-                            setShowError(false);
-                            router.push('/');
-                        }
-                    }, 3000);
-                }
-            });
-        };
-
-        const fetchRoom = async () => {
-            try {
-                const roomData = await getRoom(roomId);
-                if (!isComponentMounted) return;
-                setRoom(roomData);
-                setCurrentVote(roomData.votes[userData.id] || null);
-            } catch (err) {
-                if (!isComponentMounted) return;
-                console.error('Error fetching room:', err);
-                setError('Failed to load room. Please try again.');
-                router.push('/');
-            } finally {
-                if (isComponentMounted) {
-                    setLoading(false);
-                }
-            }
-        };
-
-        // Add all event listeners
-        window.addEventListener('beforeunload', handleBeforeUnload);
-        window.addEventListener('popstate', handlePopState);
-        window.addEventListener('hashchange', handleHashChange);
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-        window.addEventListener('pagehide', handlePageHide);
-
-        setupSocket();
-        fetchRoom();
-
-        return () => {
-            isComponentMounted = false;
-            // Remove all event listeners
-            window.removeEventListener('beforeunload', handleBeforeUnload);
-            window.removeEventListener('popstate', handlePopState);
-            window.removeEventListener('hashchange', handleHashChange);
-            document.removeEventListener('visibilitychange', handleVisibilityChange);
-            window.removeEventListener('pagehide', handlePageHide);
-
-            if (socket.connected) {
-                emitLeaveRoom();
-                localStorage.setItem('lastRoomId', roomId);
-            }
-            socket.off('room-update');
-            socket.off('error');
-            socket.off('connect');
-            socket.off('disconnect');
-            socket.disconnect();
-        };
-    }, [roomId, userData, router]);
-
-    const handleVote = (value: number) => {
-        if (!room || room.revealed) return;
-        const socket = getSocket();
-        socket.emit('submit-vote', { roomId, userId: userData.id, vote: value });
-    };
-
-    const handleReset = () => {
-        if (!room) return;
-        const socket = getSocket();
-        console.log('Before reset:', { currentStory: room.currentStory });
-        socket.emit('reset-voting', { roomId });
-        setCurrentVote(null);
-    };
-
-    const handleAddStory = (title: string) => {
-        if (!title.trim()) return;
-        const socket = getSocket();
-        socket.emit('add-story', {
-            roomId,
-            title,
-            userId: userData.id,
-            createdBy: userData.id,
-            description: ''
-        });
-    };
-
-    const handleStartVoting = (storyId: string) => {
-        if (!room) return;
-        const story = room.stories.find(s => s.id === storyId);
-        if (!story) {
-            console.error('Story not found:', storyId);
-            return;
-        }
-        const socket = getSocket();
-        socket.emit('start-voting', {
-            roomId,
-            storyId,
-            userId: userData.id,
-            createdBy: userData.id
-        });
-    };
-
-    const handleCompleteStory = (storyId: string) => {
-        if (!room) return;
-        const story = room.stories.find(s => s.id === storyId);
-        if (!story) {
-            console.error('Story not found:', storyId);
-            return;
-        }
-        const socket = getSocket();
-        socket.emit('reveal-votes', { roomId });
-        socket.emit('complete-story', {
-            roomId,
-            storyId,
-            userId: userData.id,
-            createdBy: userData.id
-        });
-    };
-
-    const handleSkipStory = (storyId: string) => {
-        if (!room) return;
-        const story = room.stories.find(s => s.id === storyId);
-        if (!story) {
-            console.error('Story not found:', storyId);
-            return;
-        }
-        const socket = getSocket();
-        socket.emit('skip-story', {
-            roomId,
-            storyId,
-            userId: userData.id,
-            createdBy: userData.id
-        });
-    };
-
-    const handleRevoteStory = (title: string) => {
-        if (!room) return;
-        const socket = getSocket();
-        socket.emit('add-story', {
-            roomId,
-            title,
-            userId: userData.id,
-            createdBy: userData.id,
-            description: ''
-        });
-    };
-
-    const handleDeleteStory = (storyId: string) => {
-        if (!room) return;
-        const socket = getSocket();
-        socket.emit('delete-story', {
-            roomId,
-            storyId,
-            userId: userData.id
-        });
-    };
+    const {
+        handleVote,
+        handleReset,
+        handleAddStory,
+        handleStartVoting,
+        handleCompleteStory,
+        handleSkipStory,
+        handleRevoteStory,
+        handleDeleteStory
+    } = useStoryHandlers(roomId, userData.id, room);
 
     if (loading) {
         return (
