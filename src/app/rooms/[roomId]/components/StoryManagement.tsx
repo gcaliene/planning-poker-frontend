@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Story } from '../../../../types';
 import { ArrowPathIcon, TrashIcon } from '@heroicons/react/24/outline';
 
@@ -23,16 +23,34 @@ export const StoryManagement: React.FC<StoryManagementProps> = ({
     onRevoteStory,
     onDeleteStory,
 }) => {
-    const [isAddingStory, setIsAddingStory] = useState(false);
+    const [isAddingStory, setIsAddingStory] = useState(true);
     const [newStoryTitle, setNewStoryTitle] = useState('');
     const [showCompletedStories, setShowCompletedStories] = useState(false);
+    const inputRef = useRef<HTMLInputElement>(null);
 
     const handleAddStory = () => {
         if (!newStoryTitle.trim()) return;
         onAddStory(newStoryTitle);
         setNewStoryTitle('');
-        setIsAddingStory(false);
+        setTimeout(() => inputRef.current?.focus(), 0);
     };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            handleAddStory();
+        }
+    };
+
+    const handleCancel = () => {
+        setIsAddingStory(false);
+        setNewStoryTitle('');
+    };
+
+    useEffect(() => {
+        if (isRoomCreator && isAddingStory && inputRef.current) {
+            inputRef.current.focus();
+        }
+    }, [isRoomCreator, isAddingStory]);
 
     const handleRevote = (title: string) => {
         onRevoteStory(title);
@@ -100,7 +118,7 @@ export const StoryManagement: React.FC<StoryManagementProps> = ({
                 <h2 className="text-xl font-semibold text-gray-900">Stories</h2>
                 {isRoomCreator && (
                     <div
-                        onClick={() => setIsAddingStory(!isAddingStory)}
+                        onClick={() => isAddingStory ? handleCancel() : setIsAddingStory(true)}
                         className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200 cursor-pointer"
                     >
                         {isAddingStory ? 'Cancel' : 'Add Story'}
@@ -108,22 +126,24 @@ export const StoryManagement: React.FC<StoryManagementProps> = ({
                 )}
             </div>
 
-            {/* Add Story Form (only for room creator) */}
+            {/* Add Story Form (visible when isAddingStory is true) */}
             {isRoomCreator && isAddingStory && (
                 <div className="mb-2 flex gap-2 max-w-md px-3 py-2">
                     <input
+                        ref={inputRef}
                         type="text"
                         value={newStoryTitle}
                         onChange={(e) => setNewStoryTitle(e.target.value)}
+                        onKeyDown={handleKeyDown}
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-gray-900"
                         placeholder="Enter story title"
                     />
-                    <div
+                    <button
                         onClick={handleAddStory}
                         className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors duration-200 cursor-pointer"
                     >
                         Add
-                    </div>
+                    </button>
                 </div>
             )}
 
