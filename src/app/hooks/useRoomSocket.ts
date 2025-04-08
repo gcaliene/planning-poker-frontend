@@ -65,8 +65,33 @@ export function useRoomSocket(roomId: string, userId: string, userName: string) 
                 });
             });
 
-            socket.on('disconnect', () => {
-                console.log('Socket disconnected');
+            socket.on('disconnect', (reason) => {
+                console.log('Socket disconnected:', reason);
+                setIsConnected(false);
+                
+                if (reason !== 'io client disconnect') {
+                    console.log('Attempting to reconnect...');
+                    socket.connect();
+                }
+            });
+
+            socket.on('reconnect', (attemptNumber) => {
+                console.log('Reconnected after', attemptNumber, 'attempts');
+                setIsConnected(true);
+                
+                socket.emit('join-room', {
+                    roomId,
+                    user: { id: userId, name: userName, title: userName }
+                });
+            });
+
+            socket.on('reconnect_error', (error) => {
+                console.error('Reconnection error:', error);
+                setIsConnected(false);
+            });
+
+            socket.on('reconnect_failed', () => {
+                console.error('Failed to reconnect');
                 setIsConnected(false);
             });
 
