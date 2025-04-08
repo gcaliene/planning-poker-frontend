@@ -48,6 +48,8 @@ export function useRoom() {
         throw new Error('Room ID is missing');
       }
 
+      // Store the last room ID before navigating
+      localStorage.setItem('lastRoomId', roomId);
       router.push(`/rooms/${roomId}`);
     } catch (err) {
       console.error('Error creating room:', err);
@@ -77,6 +79,8 @@ export function useRoom() {
       }
 
       localStorage.setItem('userName', userName);
+      // Store the last room ID before navigating
+      localStorage.setItem('lastRoomId', roomId);
       router.push(`/rooms/${roomId}`);
     } catch (err) {
       console.error('Error joining room:', err);

@@ -15,10 +15,10 @@ export function useRoomSocket(roomId: string, userId: string, userName: string) 
     const [isConnected, setIsConnected] = useState(false);
 
     const emitLeaveRoom = useCallback(() => {
-        console.log('Emitting leave-room event');
+        console.log('Trying to emit leave-room event from useRoomSocket');
         const socket = getSocket();
         if (socket.connected) {
-            console.log('Emitting leave-room event');
+            console.log('Emitting leave-room event from useRoomSocket');
             socket.emit('leave-room', { roomId, userId });
             socket.disconnect();
         }

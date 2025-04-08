@@ -47,6 +47,7 @@ export const getSocket = () => {
       if (socket.connected) {
         const roomId = localStorage.getItem('lastRoomId');
         const userId = localStorage.getItem('userId');
+        console.log('Emitting leave-room event from socket.ts when socket disconnects');
         if (roomId && userId) {
           socket.emit('leave-room', { roomId, userId });
         }

@@ -39,9 +39,9 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
 
         if (userId) {
             try {
-                console.log('Emitting leave-room event');
+                console.log('Emitting leave-room event from RoomHeader Back to Home...');
                 socket.emit('leave-room', { roomId, userId });
-                console.log('Leave-room event emitted');
+                console.log('Leave-room event emitted from RoomHeader Back to Home');
 
                 // Store last room ID before navigating
                 localStorage.setItem('lastRoomId', roomId);
